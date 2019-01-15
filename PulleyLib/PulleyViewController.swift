@@ -615,7 +615,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
      
      - returns: A newly created Pulley drawer.
      */
-    required public init(contentViewController: UIViewController, drawerViewController: UIViewController) {
+    @objc required public init(contentViewController: UIViewController, drawerViewController: UIViewController) {
         super.init(nibName: nil, bundle: nil)
         
         ({
