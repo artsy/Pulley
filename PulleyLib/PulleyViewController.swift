@@ -78,22 +78,31 @@ public typealias PulleyAnimationCompletionBlock = ((_ finished: Bool) -> Void)
  */
 @objc public class PulleyPosition: NSObject {
     
-    public static let collapsed = PulleyPosition(rawValue: 0)
-    public static let partiallyRevealed = PulleyPosition(rawValue: 1)
-    public static let open = PulleyPosition(rawValue: 2)
-    public static let closed = PulleyPosition(rawValue: 3)
+    @objc public static let collapsed = PulleyPosition(rawValue: 0)
+    @objc public static let partiallyRevealed = PulleyPosition(rawValue: 1)
+    @objc public static let open = PulleyPosition(rawValue: 2)
+    @objc public static let closed = PulleyPosition(rawValue: 3)
     
-    public static let all: [PulleyPosition] = [
-        .collapsed,
+//    @objc public static let all: [PulleyPosition] = [
+//        .collapsed,
+//        .partiallyRevealed,
+//        .open,
+//        .closed
+//    ]
+
+    @objc public static let artsy: [PulleyPosition] = [
         .partiallyRevealed,
-        .open,
-        .closed
+        .open
     ]
     
     let rawValue: Int
     
     init(rawValue: Int) {
         self.rawValue = rawValue
+    }
+
+    @objc public func isEqual(toPosition position: PulleyPosition) -> Bool {
+        return self.rawValue == position.rawValue
     }
     
     public static func positionFor(string: String?) -> PulleyPosition {
@@ -264,17 +273,17 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     }
     
     /// The content view controller and drawer controller can receive delegate events already. This lets another object observe the changes, if needed.
-    public weak var delegate: PulleyDelegate?
+    @objc public weak var delegate: PulleyDelegate?
     
     /// The current position of the drawer.
-    public fileprivate(set) var drawerPosition: PulleyPosition = .collapsed {
+    @objc public fileprivate(set) var drawerPosition: PulleyPosition = .collapsed {
         didSet {
             setNeedsStatusBarAppearanceUpdate()
         }
     }
 
     // The visible height of the drawer. Useful for adjusting the display of content in the main content view.
-    public var visibleDrawerHeight: CGFloat {
+    @objc public var visibleDrawerHeight: CGFloat {
         if drawerPosition == .closed {
             return 0.0
         } else {
@@ -536,7 +545,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     }
     
     /// The drawer positions supported by the drawer
-    fileprivate var supportedPositions: [PulleyPosition] = PulleyPosition.all {
+    fileprivate var supportedPositions: [PulleyPosition] = PulleyPosition.artsy {
         didSet {
             
             guard self.isViewLoaded else {
@@ -544,7 +553,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
             }
             
             guard supportedPositions.count > 0 else {
-                supportedPositions = PulleyPosition.all
+                supportedPositions = PulleyPosition.artsy
                 return
             }
             
@@ -1331,11 +1340,11 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     {
         if let drawerVCCompliant = drawerContentViewController as? PulleyDrawerViewControllerDelegate
         {
-            supportedPositions = drawerVCCompliant.supportedDrawerPositions?() ?? PulleyPosition.all
+            supportedPositions = drawerVCCompliant.supportedDrawerPositions?() ?? PulleyPosition.artsy
         }
         else
         {
-            supportedPositions = PulleyPosition.all
+            supportedPositions = PulleyPosition.artsy
         }
     }
     
@@ -1417,7 +1426,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
             let supportedPositions = drawerVCCompliant.supportedDrawerPositions?() {
             return supportedPositions
         } else {
-            return PulleyPosition.all
+            return PulleyPosition.artsy
         }
     }
     
