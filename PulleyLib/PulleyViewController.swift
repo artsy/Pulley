@@ -92,7 +92,9 @@ public typealias PulleyAnimationCompletionBlock = ((_ finished: Bool) -> Void)
 
     @objc public static let artsy: [PulleyPosition] = [
         .partiallyRevealed,
-        .open
+        .open,
+        .closed,
+        .collapsed
     ]
     
     let rawValue: Int
@@ -425,7 +427,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     }
     
     /// The starting position for the drawer when it first loads
-    public var initialDrawerPosition: PulleyPosition = .collapsed
+    public var initialDrawerPosition: PulleyPosition = .partiallyRevealed
     
     /// The display mode for Pulley. Default is 'drawer', which preserves the previous behavior of Pulley. If you want it to adapt automatically, choose 'automatic'. The current display mode is available by using the 'currentDisplayMode' property.
     public var displayMode: PulleyDisplayMode = .drawer {
