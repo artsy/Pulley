@@ -1301,7 +1301,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
      - parameter animated:   Whether or not to animate the change.
      - parameter completion: A block object to be executed when the animation sequence ends. The Bool indicates whether or not the animations actually finished before the completion handler was called.
      */
-    public func setDrawerContentViewController(controller: UIViewController, animated: Bool = true, completion: PulleyAnimationCompletionBlock?)
+    @objc public func setDrawerContentViewController(controller: UIViewController, animated: Bool = true, completion: PulleyAnimationCompletionBlock?)
     {
         // Account for transition issue in iOS 11
         controller.view.frame = drawerContentContainer.bounds
@@ -1334,7 +1334,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
      - parameter controller: The controller to replace it with
      - parameter animated:   Whether or not to animate the change.
      */
-    public func setDrawerContentViewController(controller: UIViewController, animated: Bool = true)
+    @objc public func setDrawerContentViewController(controller: UIViewController, animated: Bool = true)
     {
         setDrawerContentViewController(controller: controller, animated: animated, completion: nil)
     }
