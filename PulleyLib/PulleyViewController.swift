@@ -553,7 +553,11 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
             guard self.isViewLoaded else {
                 return
             }
-            
+
+            guard oldValue != supportedPositions else {
+                return
+            }
+
             guard supportedPositions.count > 0 else {
                 supportedPositions = PulleyPosition.artsy
                 return
