@@ -190,8 +190,6 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     fileprivate let backgroundDimmingView: UIView = UIView()
     
     fileprivate var dimmingViewTapRecognizer: UITapGestureRecognizer?
-    
-    fileprivate var lastDragTargetContentOffset: CGPoint = CGPoint.zero
 
     // Public
     
@@ -540,7 +538,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     }
     
     /// Get the drawer scrollview's pan gesture recognizer
-    public var drawerPanGestureRecognizer: UIPanGestureRecognizer {
+    @objc public var drawerPanGestureRecognizer: UIPanGestureRecognizer {
         get {
             return drawerScrollView.panGestureRecognizer
         }
@@ -1487,14 +1485,16 @@ extension PulleyViewController: PulleyPassthroughScrollViewDelegate {
 
 extension PulleyViewController: UIScrollViewDelegate {
 
-    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+    public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         
         if scrollView == drawerScrollView
         {
+            let lastDragTargetContentOffset = targetContentOffset.pointee
+
             // Find the closest anchor point and snap there.
-            var collapsedHeight:CGFloat = kPulleyDefaultCollapsedHeight
-            var partialRevealHeight:CGFloat = kPulleyDefaultPartialRevealHeight
-            
+            var collapsedHeight: CGFloat = kPulleyDefaultCollapsedHeight
+            var partialRevealHeight: CGFloat = kPulleyDefaultPartialRevealHeight
+
             if let drawerVCCompliant = drawerContentViewController as? PulleyDrawerViewControllerDelegate
             {
                 collapsedHeight = drawerVCCompliant.collapsedDrawerHeight?(bottomSafeArea: pulleySafeAreaInsets.bottom) ?? kPulleyDefaultCollapsedHeight
@@ -1503,43 +1503,43 @@ extension PulleyViewController: UIScrollViewDelegate {
 
             var drawerStops: [CGFloat] = [CGFloat]()
             var currentDrawerPositionStop: CGFloat = 0.0
-            
+
             if supportedPositions.contains(.open)
             {
                 drawerStops.append(heightOfOpenDrawer)
-                
+
                 if drawerPosition == .open
                 {
                     currentDrawerPositionStop = drawerStops.last!
                 }
             }
-            
+
             if supportedPositions.contains(.partiallyRevealed)
             {
                 drawerStops.append(partialRevealHeight)
-                
+
                 if drawerPosition == .partiallyRevealed
                 {
                     currentDrawerPositionStop = drawerStops.last!
                 }
             }
-            
+
             if supportedPositions.contains(.collapsed)
             {
                 drawerStops.append(collapsedHeight)
-                
+
                 if drawerPosition == .collapsed
                 {
                     currentDrawerPositionStop = drawerStops.last!
                 }
             }
-            
+
             let lowestStop = drawerStops.min() ?? 0
-            
+
             let distanceFromBottomOfView = lowestStop + lastDragTargetContentOffset.y
-            
+
             var currentClosestStop = lowestStop
-            
+
             for currentStop in drawerStops
             {
                 if abs(currentStop - distanceFromBottomOfView) < abs(currentClosestStop - distanceFromBottomOfView)
@@ -1547,9 +1547,9 @@ extension PulleyViewController: UIScrollViewDelegate {
                     currentClosestStop = currentStop
                 }
             }
-            
+
             var closestValidDrawerPosition: PulleyPosition = drawerPosition
-            
+
             if abs(Float(currentClosestStop - heightOfOpenDrawer)) <= Float.ulpOfOne && supportedPositions.contains(.open)
             {
                 closestValidDrawerPosition = .open
@@ -1562,19 +1562,12 @@ extension PulleyViewController: UIScrollViewDelegate {
             {
                 closestValidDrawerPosition = .partiallyRevealed
             }
-            
+
             let snapModeToUse: PulleySnapMode = closestValidDrawerPosition == drawerPosition ? snapMode : .nearestPosition
-            
-            switch snapModeToUse {
-                
-            case .nearestPosition:
-                
-                setDrawerPosition(position: closestValidDrawerPosition, animated: true)
-                
-            case .nearestPositionUnlessExceeded(let threshold):
-                
+
+            if case .nearestPositionUnlessExceeded(let threshold) = snapModeToUse {
                 let distance = currentDrawerPositionStop - distanceFromBottomOfView
-                
+
                 var positionToSnapTo: PulleyPosition = drawerPosition
 
                 if abs(distance) > threshold
@@ -1595,7 +1588,7 @@ extension PulleyViewController: UIScrollViewDelegate {
                     else
                     {
                         let orderedSupportedDrawerPositions = supportedPositions.sorted(by: { $0.rawValue > $1.rawValue }).filter({ $0 != .closed })
-                        
+
                         for position in orderedSupportedDrawerPositions
                         {
                             if position.rawValue < drawerPosition.rawValue
@@ -1606,20 +1599,42 @@ extension PulleyViewController: UIScrollViewDelegate {
                         }
                     }
                 }
-                
-                setDrawerPosition(position: positionToSnapTo, animated: true)
+
+                closestValidDrawerPosition = positionToSnapTo
             }
-        }
-    }
-    
-    public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        
-        if scrollView == drawerScrollView
-        {
-            lastDragTargetContentOffset = targetContentOffset.pointee
-            
-            // Halt intertia
-            targetContentOffset.pointee = scrollView.contentOffset
+
+            self.drawerPosition = closestValidDrawerPosition
+
+            let stopToMoveTo: CGFloat
+
+            switch drawerPosition {
+
+            case .collapsed:
+                stopToMoveTo = collapsedHeight
+
+            case .partiallyRevealed:
+                stopToMoveTo = partialRevealHeight
+
+            case .open:
+                stopToMoveTo = heightOfOpenDrawer
+
+            case .closed:
+                stopToMoveTo = 0
+
+            default:
+                stopToMoveTo = 0
+            }
+
+            triggerFeedbackGenerator()
+
+            let desiredComputedDrawerPositionContentOffset = CGPoint(x: 0, y: stopToMoveTo - lowestStop)
+            targetContentOffset.pointee = desiredComputedDrawerPositionContentOffset
+
+            self.delegate?.drawerPositionDidChange?(drawer: self, bottomSafeArea: self.pulleySafeAreaInsets.bottom)
+            (self.drawerContentViewController as? PulleyDrawerViewControllerDelegate)?.drawerPositionDidChange?(drawer: self, bottomSafeArea: self.pulleySafeAreaInsets.bottom)
+            (self.primaryContentViewController as? PulleyPrimaryContentControllerDelegate)?.drawerPositionDidChange?(drawer: self, bottomSafeArea: self.pulleySafeAreaInsets.bottom)
+
+            self.view.layoutIfNeeded()
         }
     }
     
