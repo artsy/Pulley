@@ -538,7 +538,7 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     }
     
     /// Get the drawer scrollview's pan gesture recognizer
-    public var drawerPanGestureRecognizer: UIPanGestureRecognizer {
+    @objc public var drawerPanGestureRecognizer: UIPanGestureRecognizer {
         get {
             return drawerScrollView.panGestureRecognizer
         }
