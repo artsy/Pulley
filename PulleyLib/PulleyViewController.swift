@@ -1629,6 +1629,8 @@ extension PulleyViewController: UIScrollViewDelegate {
 
             let desiredComputedDrawerPositionContentOffset = CGPoint(x: 0, y: stopToMoveTo - lowestStop)
             targetContentOffset.pointee = desiredComputedDrawerPositionContentOffset
+            
+            scrollView.isScrollEnabled = false
 
             self.delegate?.drawerPositionDidChange?(drawer: self, bottomSafeArea: self.pulleySafeAreaInsets.bottom)
             (self.drawerContentViewController as? PulleyDrawerViewControllerDelegate)?.drawerPositionDidChange?(drawer: self, bottomSafeArea: self.pulleySafeAreaInsets.bottom)
@@ -1636,6 +1638,10 @@ extension PulleyViewController: UIScrollViewDelegate {
 
             self.view.layoutIfNeeded()
         }
+    }
+    
+    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        scrollView.isScrollEnabled = true
     }
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
