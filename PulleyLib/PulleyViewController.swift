@@ -354,10 +354,12 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     /// The opacity of the drawer shadow.
     @IBInspectable public var shadowOpacity: Float = 0.1 {
         didSet {
-            if self.isViewLoaded
-            {
-                drawerShadowView.layer.shadowOpacity = shadowOpacity
-                self.view.setNeedsLayout()
+            if oldValue != shadowOpacity {
+                if self.isViewLoaded
+                {
+                    drawerShadowView.layer.shadowOpacity = shadowOpacity
+                    self.view.setNeedsLayout()
+                }
             }
         }
     }
@@ -365,10 +367,12 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     /// The radius of the drawer shadow.
     @IBInspectable public var shadowRadius: CGFloat = 3.0 {
         didSet {
-            if self.isViewLoaded
-            {
-                drawerShadowView.layer.shadowRadius = shadowRadius
-                self.view.setNeedsLayout()
+            if oldValue != shadowRadius {
+                if self.isViewLoaded
+                {
+                    drawerShadowView.layer.shadowRadius = shadowRadius
+                    self.view.setNeedsLayout()
+                }
             }
         }
     }
@@ -376,11 +380,13 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     /// The offset of the drawer shadow.
     @IBInspectable public var shadowOffset = CGSize(width: 0.0, height: -3.0) {
         didSet {
-          if self.isViewLoaded {
-            drawerShadowView.layer.shadowOffset = shadowOffset
-            self.view.setNeedsLayout()
-          }
-      }
+            if oldValue != shadowOffset {
+                if self.isViewLoaded {
+                  drawerShadowView.layer.shadowOffset = shadowOffset
+                  self.view.setNeedsLayout()
+                }
+            }
+        }
     }
 
     /// The opaque color of the background dimming view.
@@ -583,13 +589,13 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
     /// The currently rendered display mode for Pulley. This will match displayMode unless you have it set to 'automatic'. This will provide the 'actual' display mode (never automatic).
     public fileprivate(set) var currentDisplayMode: PulleyDisplayMode = .automatic {
         didSet {
-            if self.isViewLoaded
-            {
-                self.view.setNeedsLayout()
-            }
-            
             if oldValue != currentDisplayMode
             {
+                if self.isViewLoaded
+                {
+                    self.view.setNeedsLayout()
+                }
+
                 delegate?.drawerDisplayModeDidChange?(drawer: self)
                 (drawerContentViewController as? PulleyDrawerViewControllerDelegate)?.drawerDisplayModeDidChange?(drawer: self)
                 (primaryContentContainer as? PulleyPrimaryContentControllerDelegate)?.drawerDisplayModeDidChange?(drawer: self)
@@ -980,7 +986,11 @@ open class PulleyViewController: UIViewController, PulleyDrawerViewControllerDel
      user of this library), then the corners parameter will be ignored.
      */
     private func drawerMaskingPath(byRoundingCorners corners: UIRectCorner) -> UIBezierPath {
-        drawerContentViewController.view.layoutIfNeeded()
+
+        // Only layout the drawer content view if the position is not closed. If the position is closed this view is not visable and does not need to be layout for the masking path. This is the root of iOS 14 auto layout feedback loop.
+        if drawerPosition != .closed {
+            drawerContentViewController.view.layoutIfNeeded()
+        }
 
         let path: UIBezierPath
         if let customPath = (drawerContentViewController.view.layer.mask as? CAShapeLayer)?.path {
